@@ -13,7 +13,7 @@ import { Article, ArticleHeader, Author, Bucket, Identity } from './models';
 export class DLog {
   public static readonly ROOT_DOMAIN: string = 'alpress.eth';
   public static readonly AUTHOR_PAGE: string =
-    '/ipfs/QmcsxcjVDtETYAa7u5UnfukGbP5YKLuoajxLsMRR9Lw7NH';
+    '/ipfs/QmTRfMMmTVwTynpZ83CTYLi7ASA8Xi3SSLBdDL6eGUUuat';
   public static readonly IDENTITY_FILE: string = 'identity.json';
   public static readonly INDEX_FILE: string = 'index.html';
 
