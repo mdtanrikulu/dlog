@@ -8,12 +8,14 @@ import { AbstractProvider } from 'web3-core/types';
 // import getNameHashSHA3 from './hash';
 import { AlpressResolver, AlpressRegistrar } from '@dlog/alpress-contracts';
 
-
 const storeKey = 'ALPRESS_LOCAL_CONTRACT_ADDRESS_v0';
 
-export async function localSetup(provider: ganache.Provider | null = null): Promise<any> {
+export async function localSetup(
+  provider: ganache.Provider | null = null
+): Promise<any> {
   const repoPath = 'repo/ipfs-' + Math.random();
   const ipfs = await IPFS.create({ repo: repoPath });
+
   await ipfs.bootstrap.add(
     '/ip4/95.179.128.10/tcp/5001/p2p/QmYDZk4ns1qSReQoZHcGa8jjy8SdhdAqy3eBgd1YMgGN9j'
   );
@@ -21,14 +23,12 @@ export async function localSetup(provider: ganache.Provider | null = null): Prom
     provider = ganache.provider({
       allowUnlimitedContractSize: true,
       gasLimit: 3000000000,
-      gasPrice: "20000"
+      gasPrice: '20000'
     });
-  const web3 = new Web3(provider as any);
 
-  console.log(storeKey);
+  const web3 = new Web3(provider as any);
   const contracts = store.get(storeKey);
   const skipDeploy = await checkIfContractDeployed(web3, contracts);
-
   const config = await deploy(web3, skipDeploy, contracts);
 
   return {
@@ -49,7 +49,7 @@ async function checkIfContractDeployed(
   web3: Web3,
   contracts: object
 ): Promise<boolean> {
-  if(!contracts) return false;
+  if (!contracts) return false;
   return await asyncEvery(Object.values(contracts), async contract => {
     // maybe address validation here
     let result = await web3.eth.getCode(contract);
