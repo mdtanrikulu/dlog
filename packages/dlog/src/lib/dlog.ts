@@ -71,8 +71,12 @@ export class DLog {
   }
 
   public async putBucket(bucket: Bucket): Promise<IPFSPath> {
-    const bucket_cid: IPFSPath = await this.put({ ...bucket }, null);
-    return bucket_cid;
+    try {
+      const bucket_cid: IPFSPath = await this.put({ ...bucket }, null);
+      return bucket_cid;
+    } catch (error) {
+      throw Error(error);
+    }
   }
 
   /**
