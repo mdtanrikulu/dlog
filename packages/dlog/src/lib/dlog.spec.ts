@@ -180,7 +180,6 @@ test('register secondary account', async t => {
     retrieved_identity.author_cid.toString(),
     identity.getAuthorCID().toString()
   );
-  console.log("7");
   dlog.logout();
 });
 

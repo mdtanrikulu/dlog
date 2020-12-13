@@ -526,7 +526,7 @@ export class DLog {
     identity: Identity,
     options?: object
   ): Promise<string> {
-    const _identity = new Identity(identity.getAuthorCID());
+    const _identity = new Identity(identity['author_cid']);
     const user_cid = await this.createIdentity(_identity);
 
     try {
