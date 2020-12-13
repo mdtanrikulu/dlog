@@ -178,7 +178,7 @@ test('register secondary account', async t => {
   const retrieved_identity = await dlog.retrieveIdentity(content_hash);
   t.is(
     retrieved_identity.author_cid.toString(),
-    identity.author_cid.toString()
+    identity.getAuthorCID().toString()
   );
   console.log("7");
   dlog.logout();
