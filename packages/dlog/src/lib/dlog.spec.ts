@@ -194,6 +194,17 @@ test('login secondary account', async t => {
   t.is(subdomain, 'testing');
 });
 
+test('update_author', async t => {
+  const dlog = t.context['dlog'];
+  const { secondary_account, sendOptions } = t.context['ens'];
+  const author: Author = new Author('ufnik','', '');
+  await dlog.updateAuthor(author, {
+    ...sendOptions,
+    from: secondary_account
+  });
+  t.pass();
+});
+
 test('publish article', async t => {
   const dlog = t.context['dlog'];
   const { secondary_account, sendOptions } = t.context['ens'];

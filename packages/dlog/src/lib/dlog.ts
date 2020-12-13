@@ -544,12 +544,11 @@ export class DLog {
   }
 
   public async updateAuthor(
-    subdomain: string,
     author: Author,
-    content_hash: string,
     options?: object
   ): Promise<string> {
-    
+    const subdomain = this.session.getSubdomain();
+    const content_hash: string = await this.getContenthash(subdomain);
     const identity: Identity = await this.retrieveIdentity(content_hash);
     const author_cid: IPFSPath = await this.put({ ...author }, null);
     identity.setAuthorCID(author_cid);
