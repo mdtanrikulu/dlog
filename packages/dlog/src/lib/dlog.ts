@@ -9,19 +9,14 @@ import { IPFSPath } from 'ipfs/types/interface-ipfs-core/common';
 import namehash from 'eth-ens-namehash';
 import Web3 from 'web3';
 
-import { Article, ArticleHeader, Author, Bucket, Identity } from './models';
+import { Article, ArticleHeader, ArticlesIndex, Author, Bucket, Identity } from './models';
 import { Session } from './models/session';
 
 export class DLog {
   public static readonly ROOT_DOMAIN: string = 'alpress.eth';
 
-  // Cryptoanachist manifests
-  // public static readonly AUTHOR_PAGE: string =
-  //   '/ipfs/QmZjNmDspDCuw9bkgFQcwsoKuxHKzifqq7yTEEyQdeHCXp';
-
-  public static readonly AUTHOR_PAGE: string =
-    '/ipfs/QmTRfMMmTVwTynpZ83CTYLi7ASA8Xi3SSLBdDL6eGUUuat';
   public static readonly IDENTITY_FILE: string = 'identity.json';
+  public static readonly ARTICLES_INDEX: string = 'articles_index.json';
   public static readonly INDEX_FILE: string = 'index.html';
 
   public alpress;
@@ -469,7 +464,7 @@ export class DLog {
      * look for reading identity
      * @see https://github.com/ipfs/js-ipfs/blob/master/docs/core-api/FILES.md#ipfsgetipfspath-options
      * @see https://github.com/ipfs/js-ipfs/blob/master/docs/core-api/OBJECT.md#ipfsobjectgetcid-options
-     */
+     */f
     const identity_data = await this.getFiles(
       this.pathJoin([content_hash, '/static', DLog.IDENTITY_FILE])
     );
@@ -492,7 +487,7 @@ export class DLog {
    * @see https://github.com/ipfs/js-ipfs/blob/master/docs/core-api/FILES.md#ipfsadddata-options
    * @see https://github.com/ipfs/js-ipfs/blob/master/docs/core-api/FILES.md#ipfsfilescpfrom-to-options
    */
-  public async createIdentity(identity: Identity): Promise<IPFSPath> {
+  public async createIdentity(identity: Identity, articles_index: ArticlesIndex): Promise<IPFSPath> {
     // clear any existing Alprses folder
     await this.rm('/alpress', { recursive: true });
 
@@ -509,6 +504,16 @@ export class DLog {
     await this.node.files.write(
       this.pathJoin(['/alpress', '/static', DLog.IDENTITY_FILE]),
       identity.asBuffer(),
+      {
+        create: true,
+        truncate: true
+      }
+    );
+
+    // copy the articles index file into /alpress/static folder
+    await this.node.files.write(
+      this.pathJoin(['/alpress', '/static', DLog.ARTICLES_INDEX]),
+      articles_index.asBuffer(),
       {
         create: true,
         truncate: true
