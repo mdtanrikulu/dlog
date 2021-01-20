@@ -5,7 +5,7 @@ import test from 'ava';
 import contentHash from 'content-hash';
 
 import { DLog } from './dlog';
-import { Article, ArticleHeader, Author, Bucket, Identity } from './models';
+import { Article, ArticleHeader, ArticlesIndex, Author, Bucket, Identity } from './models';
 import {localSetup, timeTravel } from '@dlog/dlog-utils';
 
 test.before(async t => {
@@ -72,6 +72,7 @@ test('put/get article header', async t => {
   const article_header = new ArticleHeader(
     article_cid,
     'Test title',
+    'test_id',
     author,
     'base64_img',
     'Test',
@@ -97,6 +98,7 @@ test('test archiving', async t => {
   const article_header = new ArticleHeader(
     article_cid,
     'Test title',
+    'test_id',
     author,
     'base64_img',
     'Test',
@@ -133,6 +135,7 @@ test('put/get bucket', async t => {
   const article_header = new ArticleHeader(
     article_cid,
     'Test title',
+    'test_id',
     author,
     'base64_img',
     'Test',
@@ -157,7 +160,8 @@ test('put/get identity', async t => {
   const author: Author = new Author('mdt', '', '');
   const author_cid = await dlog.putAuthor(author);
   const identity = new Identity(author_cid);
-  const identity_cid = await dlog.createIdentity(identity);
+  const articles_index = new ArticlesIndex(null);
+  const identity_cid = await dlog.createIdentity(identity, articles_index);
   // const pinned_cid = await dlog.pinIdentity(identity_cid);
   const result_identity = await dlog.retrieveIdentity(identity_cid);
   t.is(identity.toString(), result_identity.toString());
@@ -224,7 +228,7 @@ test('edit article', async t => {
   const article = new Article(
     '{"blocks":[{"key":"b8nf6","text":"test","type":"header-one","depth":0,"inlineStyleRanges":[],"entityRanges":[],"data":{}}],"entityMap":{}}'
   );
-  await dlog.publishArticle(article, {
+  const article_id: string = await dlog.publishArticle(article, {
     ...sendOptions,
     from: secondary_account
   });
@@ -234,7 +238,7 @@ test('edit article', async t => {
   const article2 = new Article(
     '{"blocks":[{"key":"b8nf6","text":"test 2","type":"header-one","depth":0,"inlineStyleRanges":[],"entityRanges":[],"data":{}}],"entityMap":{}}'
   );
-  await dlog.replaceArticle(article_cids_old[0], article2, {
+  await dlog.replaceArticle(article_id, article_cids_old[0], article2, {
     ...sendOptions,
     from: secondary_account
   });
@@ -250,7 +254,7 @@ test('remove article', async t => {
   const article = new Article(
     '{"blocks":[{"key":"b8nf6","text":"test","type":"header-one","depth":0,"inlineStyleRanges":[],"entityRanges":[],"data":{}}],"entityMap":{}}'
   );
-  await dlog.publishArticle(article, {
+  const article_id: string = await dlog.publishArticle(article, {
     ...sendOptions,
     from: secondary_account
   });
@@ -258,7 +262,7 @@ test('remove article', async t => {
     article_header_cids: article_cids_old
   } = await dlog.retrieveLatestBucket();
 
-  await dlog.removeArticle(article_cids_old[0], {
+  await dlog.removeArticle(article_id, article_cids_old[0], {
     ...sendOptions,
     from: secondary_account
   });

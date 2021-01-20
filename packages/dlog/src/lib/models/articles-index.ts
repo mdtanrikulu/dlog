@@ -1,5 +1,4 @@
 import { IPFSPath } from 'ipfs/types/interface-ipfs-core/common';
-import { ArticleHeader } from './';
 
 /*
 This class uses the concept of article_id.
@@ -9,15 +8,18 @@ article_id = article title with '-' instead of
  */
 
 export class ArticlesIndex {
-  //article_id -> article CID
+  //article_id -> article_cid
   private index: Object;
   
-  constructor() {
-    this.index = new Object();
+  constructor(index: Object | null) {
+    if (index !== null)
+      this.index = index;
+    else
+      this.index = new Object();
   }
 
-  public addArticle(article_header: ArticleHeader, article_cid: IPFSPath): string {
-    let article_id_removed_spaces = article_header.title.replace(/ /g, "-");
+  public addArticle(title: string, article_cid: IPFSPath): string {
+    let article_id_removed_spaces = title.replace(/ /g, "-");
     let article_id = article_id_removed_spaces + "-" + this.generateHash();
 
     while (article_id in this.index) {
@@ -51,13 +53,21 @@ export class ArticlesIndex {
       return false;
   }
 
+  public asBuffer(): Buffer {
+    const articles_index = {
+      index: this.index
+    };
+    return Buffer.from(JSON.stringify(articles_index));
+  }
+
   /**
    * Auxiliary functions
    */
-  private generateHash(): String {
-    return Math.floor(2147483648 * Math.random()).toString(36) + 
-    Math.abs(Math.floor(2147483648 * Math.random()) ^ (0, this.getTimestamp)()).toString(36)
-  }
+  private generateHash() {
+    const hash = Math.floor(2147483648 * Math.random()).toString(36) + 
+      Math.abs(Math.floor(2147483648 * Math.random()) ^ this.getTimestamp()).toString(36);
+    return hash;
+}
 
   private getTimestamp = Date.now || function() {
     return +new Date

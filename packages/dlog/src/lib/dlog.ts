@@ -138,16 +138,21 @@ export class DLog {
   public async publishArticle(
     article: Article,
     options: object
-  ): Promise<void> {
+  ): Promise<string> {
     const author = this.session.getAuthor();
     const article_cid: IPFSPath = await this.putArticle(article);
     const { title, cover_image, summary } = this._harvestArticle(
       article.serializedArticle
     );
+
+    let articles_index: ArticlesIndex = await this.retrieveArticlesIndex();
+    const article_id = articles_index.addArticle(title, article_cid);
+
     // TO DO think of a way to extract summary, title for Article Summary model
     const article_header = new ArticleHeader(
       article_cid,
       title,
+      article_id,
       author,
       cover_image,
       summary,
@@ -165,10 +170,16 @@ export class DLog {
       `new bucket cid: ${updated_bucket_cid}, needs archiving: ${need_archiving}`
     );
 
-    await this._publish(updated_bucket_cid, need_archiving, options);
+    await this._publish(updated_bucket_cid, articles_index, need_archiving, options);
+
+    return article_id;
   }
 
-  public async removeArticle(article_summary_cid: IPFSPath, options: object) {
+  public async removeArticle(article_id: string, article_summary_cid: IPFSPath, options: object) {
+    // remove article_id from index
+    let articles_index = await this.retrieveArticlesIndex();
+    articles_index.removeArticle(article_id);
+
     this.session.getSubdomain(); // will throw if no session
     let bucket: Bucket = await this.retrieveLatestBucket();
     const updated_bucket_cid = await this._removeArticle(
@@ -176,10 +187,11 @@ export class DLog {
       bucket
     );
     if (updated_bucket_cid)
-      await this._publish(updated_bucket_cid, false, options);
+      await this._publish(updated_bucket_cid, articles_index, false, options);
   }
 
   public async replaceArticle(
+    article_id: string,
     old_article_summary_cid: IPFSPath,
     new_article: Article,
     options
@@ -190,9 +202,16 @@ export class DLog {
       new_article.serializedArticle
     );
     // TO DO think of a way to extract summary, title for Article Summary model
+
+    // update article_cid in index
+    let articles_index = await this.retrieveArticlesIndex();
+    articles_index.updateArticle(article_id, article_cid);    
+    
+
     const article_header = new ArticleHeader(
       article_cid,
       title,
+      article_id,
       author,
       cover_image,
       summary,
@@ -206,7 +225,7 @@ export class DLog {
       bucket
     );
     if (updated_bucket_cid)
-      await this._publish(updated_bucket_cid, false, options);
+      await this._publish(updated_bucket_cid, articles_index, false, options);
   }
 
   public async addArticleHeaderCIDToBucket(
@@ -394,6 +413,7 @@ export class DLog {
 
   private async _publish(
     updated_bucket_cid: IPFSPath,
+    articles_index: ArticlesIndex,
     need_archiving: boolean = false,
     options: object
   ) {
@@ -403,7 +423,7 @@ export class DLog {
 
     identity.updateBucketCID(updated_bucket_cid, need_archiving);
 
-    const user_cid: IPFSPath = await this.createIdentity(identity);
+    const user_cid: IPFSPath = await this.createIdentity(identity, articles_index);
     console.log("user_cid: ", user_cid);
     const msg = `${subdomain} ${user_cid.toString()}`;
 
@@ -459,12 +479,29 @@ export class DLog {
    *
    * @param content_hash string of CID object
    */
+  public async retrieveArticlesIndex(): Promise<ArticlesIndex> {
+    const subdomain = this.session.getSubdomain();
+    const content_hash: string = await this.getContenthash(subdomain);
+    const articles_index_data = await this.getFiles(
+      this.pathJoin([content_hash, '/static', DLog.ARTICLES_INDEX])
+    );
+
+    const index = JSON.parse(articles_index_data[0].toString());
+    const articles_index = new ArticlesIndex(index);
+
+    return articles_index;
+  }
+
+  /**
+   *
+   * @param content_hash string of CID object
+   */
   public async retrieveIdentity(content_hash: string): Promise<Identity> {
     /**
      * look for reading identity
      * @see https://github.com/ipfs/js-ipfs/blob/master/docs/core-api/FILES.md#ipfsgetipfspath-options
      * @see https://github.com/ipfs/js-ipfs/blob/master/docs/core-api/OBJECT.md#ipfsobjectgetcid-options
-     */f
+     */
     const identity_data = await this.getFiles(
       this.pathJoin([content_hash, '/static', DLog.IDENTITY_FILE])
     );
@@ -541,7 +578,8 @@ export class DLog {
     options?: object
   ): Promise<string> {
     const _identity = new Identity(identity['author_cid']);
-    const user_cid = await this.createIdentity(_identity);
+    const _articles_index = new ArticlesIndex(null);
+    const user_cid = await this.createIdentity(_identity, _articles_index);
 
     try {
       const result = await this.alpress.methods
@@ -564,9 +602,10 @@ export class DLog {
     const subdomain = this.session.getSubdomain();
     const content_hash: string = await this.getContenthash(subdomain);
     const identity: Identity = await this.retrieveIdentity(content_hash);
+    const articles_index: ArticlesIndex = await this.retrieveArticlesIndex(); // TODO: improve, possible too many IPFS calls here
     const author_cid: IPFSPath = await this.put({ ...author }, null);
     identity.setAuthorCID(author_cid);
-    const user_cid: IPFSPath = await this.createIdentity(identity);
+    const user_cid: IPFSPath = await this.createIdentity(identity, articles_index);
 
     const msg = new TextEncoder().encode(
       `${subdomain} ${user_cid.toString()}\n`
