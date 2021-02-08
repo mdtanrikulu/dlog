@@ -3,7 +3,7 @@ import { AlpressRegistrar, AlpressResolver } from '@dlog/alpress-contracts';
 import BufferList from 'bl';
 import CIDs from 'cids';
 import contentHash from 'content-hash';
-import { loadJSON } from '@dlog/dlog-utils';
+// import { loadJSON } from '@dlog/dlog-utils';
 import IPFS from 'ipfs';
 import { IPFSPath } from 'ipfs/types/interface-ipfs-core/common';
 import namehash from 'eth-ens-namehash';
@@ -52,7 +52,7 @@ export class DLog {
 
   public async putAuthor(author: Author): Promise<IPFSPath> {
     try {
-      const author_cid: IPFSPath = await this.put({ ...author }, null);
+      const author_cid: IPFSPath = await this.put({ ...author });
       this.session.setAuthor(author);
       return author_cid;
     } catch (error) {
@@ -67,7 +67,7 @@ export class DLog {
 
   public async putBucket(bucket: Bucket): Promise<IPFSPath> {
     try {
-      const bucket_cid: IPFSPath = await this.put({ ...bucket }, null);
+      const bucket_cid: IPFSPath = await this.put({ ...bucket });
       return bucket_cid;
     } catch (error) {
       throw Error(error);
@@ -114,8 +114,7 @@ export class DLog {
     article_header: ArticleHeader
   ): Promise<IPFSPath> {
     const article_header_cid: IPFSPath = await this.put(
-      { ...article_header },
-      null
+      { ...article_header }
     );
     return article_header_cid;
   }
@@ -126,7 +125,7 @@ export class DLog {
   }
 
   public async putArticle(article: Article): Promise<IPFSPath> {
-    const article_cid: IPFSPath = await this.put({ ...article }, null);
+    const article_cid: IPFSPath = await this.put({ ...article });
     return article_cid;
   }
 
@@ -417,6 +416,7 @@ export class DLog {
     need_archiving: boolean = false,
     options: object
   ) {
+    await this.node.swarm.connect("/dns4/ipfs.almonit.club/tcp/443/wss/p2p/QmYDZk4ns1qSReQoZHcGa8jjy8SdhdAqy3eBgd1YMgGN9j");
     const subdomain = this.session.getSubdomain();
     const content_hash: string = await this.getContenthash(subdomain);
     const identity: Identity = await this.retrieveIdentity(content_hash);
@@ -424,32 +424,23 @@ export class DLog {
     identity.updateBucketCID(updated_bucket_cid, need_archiving);
 
     const user_cid: IPFSPath = await this.createIdentity(identity, articles_index);
-    console.log("user_cid: ", user_cid);
     const msg = `${subdomain} ${user_cid.toString()}`;
-
-    this.connectPublish(this.swarm_topic, msg, 5000);
+    const msgEncoded = new TextEncoder().encode(msg + '\n');
     try {
       const result = await this.alpress.methods
         .publish(subdomain, this.encodeCID(user_cid.toString()))
         .send(options);
+      await this.node.pubsub.publish(this.swarm_topic, msgEncoded);
+      console.log('sent to pin msg: ', msg);
       return result;
     } catch (error) {
+      console.warn("error", error);
       return error;
     }
   }
 
-  private async connectPublish(topic, msg, delay) {
-    await this.node.swarm.connect("/dns4/ipfs.almonit.club/tcp/443/wss/p2p/QmYDZk4ns1qSReQoZHcGa8jjy8SdhdAqy3eBgd1YMgGN9j");
-
-    const msgEncoded = new TextEncoder().encode(msg + '\n')
-
-    setTimeout(() => {
-      this.node.pubsub.publish(topic, msgEncoded).then(console.log('sent to pin msg: ', msg));
-    }, delay);
-  }
-
   public async retrieveContentFromFile(): Promise<Bucket> {
-    const result = await loadJSON(`./static/${DLog.IDENTITY_FILE}`);
+    const result = await this.loadJSON(`./static/${DLog.IDENTITY_FILE}`);
     const identity = new Identity(
       new CIDs(
         1,
@@ -603,7 +594,7 @@ export class DLog {
     const content_hash: string = await this.getContenthash(subdomain);
     const identity: Identity = await this.retrieveIdentity(content_hash);
     const articles_index: ArticlesIndex = await this.retrieveArticlesIndex(); // TODO: improve, possible too many IPFS calls here
-    const author_cid: IPFSPath = await this.put({ ...author }, null);
+    const author_cid: IPFSPath = await this.put({ ...author });
     identity.setAuthorCID(author_cid);
     const user_cid: IPFSPath = await this.createIdentity(identity, articles_index);
 
@@ -687,7 +678,7 @@ export class DLog {
     return contents;
   }
 
-  private async put(object: object, options: any = null): Promise<IPFSPath> {
+  private async put(object: object, options: any = {}): Promise<IPFSPath> {
     const object_cid: IPFSPath = await this.node.dag.put(object, options);
     return object_cid;
   }
@@ -804,5 +795,21 @@ export class DLog {
       cover_image,
       summary
     };
+  }
+
+  public loadJSON(url: string): Promise<any> {
+    return new Promise(function(resolve, reject) {
+      fetch(url)
+        .then(function(response) {
+          return response.json();
+        })
+        .then(function(data) {
+          resolve(data);
+        })
+        .catch(function(e) {
+          console.error('LoadJSON error: ', e);
+          reject(null);
+        });
+    });
   }
 }
