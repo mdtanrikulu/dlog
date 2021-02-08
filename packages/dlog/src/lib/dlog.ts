@@ -9,7 +9,14 @@ import { IPFSPath } from 'ipfs/types/interface-ipfs-core/common';
 import namehash from 'eth-ens-namehash';
 import Web3 from 'web3';
 
-import { Article, ArticleHeader, ArticlesIndex, Author, Bucket, Identity } from './models';
+import {
+  Article,
+  ArticleHeader,
+  ArticlesIndex,
+  Author,
+  Bucket,
+  Identity
+} from './models';
 import { Session } from './models/session';
 
 export class DLog {
@@ -113,9 +120,7 @@ export class DLog {
   public async putArticleHeader(
     article_header: ArticleHeader
   ): Promise<IPFSPath> {
-    const article_header_cid: IPFSPath = await this.put(
-      { ...article_header }
-    );
+    const article_header_cid: IPFSPath = await this.put({ ...article_header });
     return article_header_cid;
   }
 
@@ -169,12 +174,21 @@ export class DLog {
       `new bucket cid: ${updated_bucket_cid}, needs archiving: ${need_archiving}`
     );
 
-    await this._publish(updated_bucket_cid, articles_index, need_archiving, options);
+    await this._publish(
+      updated_bucket_cid,
+      articles_index,
+      need_archiving,
+      options
+    );
 
     return article_id;
   }
 
-  public async removeArticle(article_id: string, article_summary_cid: IPFSPath, options: object) {
+  public async removeArticle(
+    article_id: string,
+    article_summary_cid: IPFSPath,
+    options: object
+  ) {
     // remove article_id from index
     let articles_index = await this.retrieveArticlesIndex();
     articles_index.removeArticle(article_id);
@@ -204,8 +218,7 @@ export class DLog {
 
     // update article_cid in index
     let articles_index = await this.retrieveArticlesIndex();
-    articles_index.updateArticle(article_id, article_cid);    
-    
+    articles_index.updateArticle(article_id, article_cid);
 
     const article_header = new ArticleHeader(
       article_cid,
@@ -416,14 +429,19 @@ export class DLog {
     need_archiving: boolean = false,
     options: object
   ) {
-    await this.node.swarm.connect("/dns4/ipfs.almonit.club/tcp/443/wss/p2p/QmYDZk4ns1qSReQoZHcGa8jjy8SdhdAqy3eBgd1YMgGN9j");
+    await this.node.swarm.connect(
+      '/dns4/ipfs.almonit.club/tcp/443/wss/p2p/QmYDZk4ns1qSReQoZHcGa8jjy8SdhdAqy3eBgd1YMgGN9j'
+    );
     const subdomain = this.session.getSubdomain();
     const content_hash: string = await this.getContenthash(subdomain);
     const identity: Identity = await this.retrieveIdentity(content_hash);
 
     identity.updateBucketCID(updated_bucket_cid, need_archiving);
 
-    const user_cid: IPFSPath = await this.createIdentity(identity, articles_index);
+    const user_cid: IPFSPath = await this.createIdentity(
+      identity,
+      articles_index
+    );
     const msg = `${subdomain} ${user_cid.toString()}`;
     const msgEncoded = new TextEncoder().encode(msg + '\n');
     try {
@@ -434,7 +452,7 @@ export class DLog {
       console.log('sent to pin msg: ', msg);
       return result;
     } catch (error) {
-      console.warn("error", error);
+      console.warn('error', error);
       return error;
     }
   }
@@ -515,7 +533,10 @@ export class DLog {
    * @see https://github.com/ipfs/js-ipfs/blob/master/docs/core-api/FILES.md#ipfsadddata-options
    * @see https://github.com/ipfs/js-ipfs/blob/master/docs/core-api/FILES.md#ipfsfilescpfrom-to-options
    */
-  public async createIdentity(identity: Identity, articles_index: ArticlesIndex): Promise<IPFSPath> {
+  public async createIdentity(
+    identity: Identity,
+    articles_index: ArticlesIndex
+  ): Promise<IPFSPath> {
     // clear any existing Alprses folder
     await this.rm('/alpress', { recursive: true });
 
@@ -579,24 +600,24 @@ export class DLog {
           ...options,
           value: this.web3.utils.toWei('0.005', 'ether')
         });
-        await this.setSubdomain(options);
-        return result;
+      await this.setSubdomain(options);
+      return result;
     } catch (error) {
       return error;
     }
   }
 
-  public async updateAuthor(
-    author: Author,
-    options?: object
-  ): Promise<string> {
+  public async updateAuthor(author: Author, options?: object): Promise<string> {
     const subdomain = this.session.getSubdomain();
     const content_hash: string = await this.getContenthash(subdomain);
     const identity: Identity = await this.retrieveIdentity(content_hash);
     const articles_index: ArticlesIndex = await this.retrieveArticlesIndex(); // TODO: improve, possible too many IPFS calls here
     const author_cid: IPFSPath = await this.put({ ...author });
     identity.setAuthorCID(author_cid);
-    const user_cid: IPFSPath = await this.createIdentity(identity, articles_index);
+    const user_cid: IPFSPath = await this.createIdentity(
+      identity,
+      articles_index
+    );
 
     const msg = new TextEncoder().encode(
       `${subdomain} ${user_cid.toString()}\n`
@@ -611,7 +632,6 @@ export class DLog {
     } catch (error) {
       return error;
     }
-
   }
 
   public async login(options) {

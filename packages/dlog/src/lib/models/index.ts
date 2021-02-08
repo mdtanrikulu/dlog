@@ -6,4 +6,12 @@ import { Bucket } from './bucket';
 import { ENSContent } from './ens-content';
 import { Identity } from './identity';
 
-export { Article, ArticleHeader, ArticlesIndex, Author, Bucket, ENSContent, Identity };
+export {
+  Article,
+  ArticleHeader,
+  ArticlesIndex,
+  Author,
+  Bucket,
+  ENSContent,
+  Identity
+};

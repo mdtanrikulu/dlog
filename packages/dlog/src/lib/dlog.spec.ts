@@ -5,8 +5,15 @@ import test from 'ava';
 import contentHash from 'content-hash';
 
 import { DLog } from './dlog';
-import { Article, ArticleHeader, ArticlesIndex, Author, Bucket, Identity } from './models';
-import {localSetup, timeTravel } from '@dlog/dlog-utils';
+import {
+  Article,
+  ArticleHeader,
+  ArticlesIndex,
+  Author,
+  Bucket,
+  Identity
+} from './models';
+import { localSetup, timeTravel } from '@dlog/dlog-utils';
 
 test.before(async t => {
   const {
@@ -35,7 +42,7 @@ test.before(async t => {
     web3,
     contractAlpressRegistrar.options.address,
     contractResolver.options.address,
-    "/ipfs/QmTRfMMmTVwTynpZ83CTYLi7ASA8Xi3SSLBdDL6eGUUuat"
+    '/ipfs/QmNhnNDXE2wgPJbijE5Sgx651AJdy4b8jPs7nQezYYLAbE'
   );
   t.context['alpress'] = contractAlpressRegistrar;
 });
@@ -49,7 +56,7 @@ test('verify version', async t => {
 
 test('put/get author', async t => {
   const dlog = t.context['dlog'];
-  const author: Author = new Author('mdt','', '');
+  const author: Author = new Author('mdt', '', '');
   const cid_author = await dlog.putAuthor(author);
   const result_author = await dlog.getAuthor(cid_author.toString());
   t.is(result_author.name, author.name);
@@ -200,7 +207,7 @@ test('login secondary account', async t => {
 test('update_author', async t => {
   const dlog = t.context['dlog'];
   const { secondary_account, sendOptions } = t.context['ens'];
-  const author: Author = new Author('ufnik','', '');
+  const author: Author = new Author('ufnik', '', '');
   await dlog.updateAuthor(author, {
     ...sendOptions,
     from: secondary_account
@@ -317,18 +324,21 @@ test('Alpress Contract > non-allocated expiration', async t => {
 //   t.pass();
 // });
 
-
 test('Alpress Contract > buy and init Alpress', async t => {
   const contract = t.context['alpress'];
   const { sendOptions, web3 } = t.context['ens'];
 
-  await contract.methods.buyAndInitAlpress(
-    'mdt', 
-    `0x${contentHash.fromIpfs('QmVNJbmxqpCj2kKB8ddtAweKU1dWeNisymCdNiYw6wokyz')}`
-  ).send({
-    ...sendOptions,
-    value: web3.utils.toWei('0.005', 'ether')
-  });
+  await contract.methods
+    .buyAndInitAlpress(
+      'mdt',
+      `0x${contentHash.fromIpfs(
+        'QmVNJbmxqpCj2kKB8ddtAweKU1dWeNisymCdNiYw6wokyz'
+      )}`
+    )
+    .send({
+      ...sendOptions,
+      value: web3.utils.toWei('0.005', 'ether')
+    });
 
   t.pass();
 });

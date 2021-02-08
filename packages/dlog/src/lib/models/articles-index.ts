@@ -10,20 +10,18 @@ article_id = article title with '-' instead of
 export class ArticlesIndex {
   //article_id -> article_cid
   private index: Object;
-  
+
   constructor(index: Object | null) {
-    if (index !== null)
-      this.index = index;
-    else
-      this.index = new Object();
+    if (index !== null) this.index = index;
+    else this.index = new Object();
   }
 
   public addArticle(title: string, article_cid: IPFSPath): string {
-    let article_id_removed_spaces = title.replace(/ /g, "-");
-    let article_id = article_id_removed_spaces + "-" + this.generateHash();
+    let article_id_removed_spaces = title.replace(/ /g, '-');
+    let article_id = article_id_removed_spaces + '-' + this.generateHash();
 
     while (article_id in this.index) {
-      article_id = article_id_removed_spaces + "-" + this.generateHash();
+      article_id = article_id_removed_spaces + '-' + this.generateHash();
     }
 
     this.index[article_id] = article_cid;
@@ -36,7 +34,7 @@ export class ArticlesIndex {
     if (article_id in this.index) {
       delete this.index[article_id];
 
-    // TODO: else throw an error? or do what?
+      // TODO: else throw an error? or do what?
     }
   }
 
@@ -47,10 +45,8 @@ export class ArticlesIndex {
   // getArticle returns false if article_id is not in index,
   // hence it can be used also for a tool to check for existence of article_id in the index
   public getArticle(article_id: string): IPFSPath | boolean {
-    if (article_id in this.index) 
-      return this.index[article_id];
-    else
-      return false;
+    if (article_id in this.index) return this.index[article_id];
+    else return false;
   }
 
   public asBuffer(): Buffer {
@@ -64,12 +60,17 @@ export class ArticlesIndex {
    * Auxiliary functions
    */
   private generateHash() {
-    const hash = Math.floor(2147483648 * Math.random()).toString(36) + 
-      Math.abs(Math.floor(2147483648 * Math.random()) ^ this.getTimestamp()).toString(36);
+    const hash =
+      Math.floor(2147483648 * Math.random()).toString(36) +
+      Math.abs(
+        Math.floor(2147483648 * Math.random()) ^ this.getTimestamp()
+      ).toString(36);
     return hash;
-}
-
-  private getTimestamp = Date.now || function() {
-    return +new Date
   }
+
+  private getTimestamp =
+    Date.now ||
+    function() {
+      return +new Date();
+    };
 }
