@@ -24,4 +24,4 @@ jobs:
         with:
           node-version: '12.x'
       - run: yarn install
-      - run: cd packages/dlog && yarn test:unit
+      - run: lerna run --scope=@dlog/dlog test:unit
