@@ -44,16 +44,14 @@ export class ArticlesIndex {
 
   // getArticle returns false if article_id is not in index,
   // hence it can be used also for a tool to check for existence of article_id in the index
-  public getArticle(article_id: string): IPFSPath | boolean {
-    if (article_id in this.index) return this.index[article_id];
-    else return false;
+  public getArticle(article_id: string): IPFSPath | false {
+    const article = this.index[article_id];
+    if (article) return this.index[article_id];
+    return false;
   }
 
   public asBuffer(): Buffer {
-    const articles_index = {
-      index: this.index
-    };
-    return Buffer.from(JSON.stringify(articles_index));
+    return Buffer.from(JSON.stringify(this.index));
   }
 
   /**

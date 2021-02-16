@@ -124,7 +124,21 @@ export class DLog {
     return article_header_cid;
   }
 
+  public async getArticleFromIndex(
+    article_id: string
+  ): Promise<IPFSPath | boolean> {
+    let articles_index: ArticlesIndex = await this.retrieveArticlesIndex();
+    const article_cid = articles_index.getArticle(article_id);
+    return article_cid;
+  }
+
   public async getArticle(cid: IPFSPath): Promise<Article> {
+    if (typeof cid !== 'string')
+      cid = new CIDs(
+        cid['version'],
+        cid['codec'],
+        new Buffer(Object.values(cid['hash']))
+      );
     const { value }: { value: Article } = (await this.get(cid)) as any;
     return value;
   }
@@ -489,14 +503,22 @@ export class DLog {
    * @param content_hash string of CID object
    */
   public async retrieveArticlesIndex(): Promise<ArticlesIndex> {
-    const subdomain = this.session.getSubdomain();
-    const content_hash: string = await this.getContenthash(subdomain);
-    const articles_index_data = await this.getFiles(
-      this.pathJoin([content_hash, '/static', DLog.ARTICLES_INDEX])
-    );
+    let article_index_obj;
 
-    const index = JSON.parse(articles_index_data[0].toString());
-    const articles_index = new ArticlesIndex(index);
+    try {
+      const subdomain = this.session.getSubdomain();
+      const content_hash: string = await this.getContenthash(subdomain);
+      const articles_index_data = await this.getFiles(
+        this.pathJoin([content_hash, '/static', DLog.ARTICLES_INDEX])
+      );
+      article_index_obj = JSON.parse(articles_index_data[0].toString());
+    } catch (error) {
+      article_index_obj = await this.loadJSON(
+        `./static/${DLog.ARTICLES_INDEX}`
+      );
+    }
+    
+    const articles_index = new ArticlesIndex(article_index_obj);
 
     return articles_index;
   }
