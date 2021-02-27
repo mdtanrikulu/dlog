@@ -112,6 +112,22 @@ export class DLog {
     return bucket;
   }
 
+  public async retrieveAuthor(): Promise<Author> {
+    const identity_file = await loadJSON(`./static/${DLog.IDENTITY_FILE}`);
+    const identity = new Identity(
+      new CIDs(
+        1,
+        identity_file.author_cid.codec,
+        new Uint8Array(Object.values(identity_file.author_cid.hash))
+      ),
+      identity_file.bucket_cids
+    );
+    const author: Author = await this.getAuthor(identity.getAuthorCID());
+
+    return author;
+  }
+
+
   public async getArticleHeader(
     cid: any,
     options = {}
