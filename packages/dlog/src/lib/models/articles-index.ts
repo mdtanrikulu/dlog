@@ -6,7 +6,7 @@ article_id = article title with '-' instead of
  */
 
 export class ArticlesIndex {
-  //article_id -> article_cid
+  //article_id -> article_header_cid
   private index: Object;
 
   constructor(index: Object | null) {
@@ -14,7 +14,7 @@ export class ArticlesIndex {
     else this.index = new Object();
   }
 
-  public addArticle(title: string, article_cid: any): string {
+  public addArticle(title: string, article_header_cid: any): string {
     let article_id_removed_spaces = title.replace(/ /g, '-');
     let article_id = article_id_removed_spaces + '-' + this.generateHash();
 
@@ -22,7 +22,7 @@ export class ArticlesIndex {
       article_id = article_id_removed_spaces + '-' + this.generateHash();
     }
 
-    this.index[article_id] = article_cid;
+    this.index[article_id] = article_header_cid;
 
     // return article_id, otherwise caller has no way to know which article_id the article got
     return article_id;
@@ -36,8 +36,8 @@ export class ArticlesIndex {
     }
   }
 
-  public updateArticle(article_id: string, article_cid: any) {
-    this.index[article_id] = article_cid;
+  public updateArticle(article_id: string, article_header_cid: any) {
+    this.index[article_id] = article_header_cid;
   }
 
   // getArticle returns false if article_id is not in index,

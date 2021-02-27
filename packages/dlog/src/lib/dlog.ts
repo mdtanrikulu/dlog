@@ -112,6 +112,21 @@ export class DLog {
     return bucket;
   }
 
+  public async retrieveAuthor(): Promise<Author> {
+    const identity_file = await loadJSON(`./static/${DLog.IDENTITY_FILE}`);
+    const identity = new Identity(
+      new CIDs(
+        1,
+        identity_file.author_cid.codec,
+        new Uint8Array(Object.values(identity_file.author_cid.hash))
+      ),
+      identity_file.bucket_cids
+    );
+    const author: Author = await this.getAuthor(identity.getAuthorCID());
+
+    return author;
+  }
+
   public async getArticleHeader(
     cid: any,
     options = {}
@@ -127,12 +142,12 @@ export class DLog {
     return article_header_cid;
   }
 
-  public async getArticleFromIndex(
+  public async getArticleHeaderCIDFromIndex(
     article_id: string
   ): Promise<any | boolean> {
     let articles_index: ArticlesIndex = await this.retrieveArticlesIndex();
-    const article_cid = articles_index.getArticle(article_id);
-    return article_cid;
+    const article_header_cid = articles_index.getArticle(article_id);
+    return article_header_cid;
   }
 
   public async getArticle(cid: any): Promise<Article> {
@@ -166,9 +181,6 @@ export class DLog {
       article.serializedArticle
     );
 
-    let articles_index: ArticlesIndex = await this.retrieveArticlesIndex();
-    const article_id = articles_index.addArticle(title, article_cid);
-
     // TO DO think of a way to extract summary, title for Article Summary model
     const article_header = new ArticleHeader(
       article_cid,
@@ -180,6 +192,10 @@ export class DLog {
       []
     );
     const article_header_cid = await this.putArticleHeader(article_header);
+
+    // add article to index
+    let articles_index: ArticlesIndex = await this.retrieveArticlesIndex();
+    const article_id = articles_index.addArticle(title, article_header_cid);
 
     let bucket: Bucket = await this.retrieveLatestBucket();
     const [
