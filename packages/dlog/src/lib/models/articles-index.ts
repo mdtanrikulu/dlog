@@ -14,14 +14,7 @@ export class ArticlesIndex {
     else this.index = new Object();
   }
 
-  public addArticle(title: string, article_header_cid: any): string {
-    let article_id_removed_spaces = title.replace(/ /g, '-');
-    let article_id = article_id_removed_spaces + '-' + this.generateHash();
-
-    while (article_id in this.index) {
-      article_id = article_id_removed_spaces + '-' + this.generateHash();
-    }
-
+  public addArticle(article_id: string, article_header_cid: any): string {
     this.index[article_id] = article_header_cid;
 
     // return article_id, otherwise caller has no way to know which article_id the article got
@@ -46,6 +39,17 @@ export class ArticlesIndex {
     const article = this.index[article_id];
     if (article) return this.index[article_id];
     return false;
+  }
+
+  public createArticleID(title: string): string {
+    let article_id_removed_spaces = title.replace(/ /g, '-');
+    let article_id = article_id_removed_spaces + '-' + this.generateHash();
+
+    while (article_id in this.index) {
+      article_id = article_id_removed_spaces + '-' + this.generateHash();
+    }
+
+    return article_id;
   }
 
   public asBuffer(): Buffer {
